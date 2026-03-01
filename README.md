@@ -1,36 +1,8 @@
-# Flappy Bird Clone
+# Attractor
 
-A minimal Flappy Bird clone built with TypeScript and Phaser 4.0 RC.
+A 2D space game built with TypeScript, Phaser 4.0 RC, and Box2D physics engine.
 
-## Setup
+## 🎮 Game Overview
 
-Install dependencies:
+Control a spaceship navigating through an asteroid field with toggleable gravitational forces. All objects attract each other when gravity is enabled, creating dynamic and challenging gameplay. Reach the green target at the top of the screen to restart with a new asteroid configuration.
 
-```bash
-npm install
-```
-
-## Running the Game
-
-Start the development server:
-
-```bash
-npm run dev
-```
-
-Then open your browser to the URL shown (usually http://localhost:5173)
-
-## How to Play
-
-- Click or press SPACE to make the bird jump
-- Avoid the pipes
-- Try to get the highest score!
-- When you crash, click or press SPACE to restart
-
-## Building for Production
-
-```bash
-npm run build
-```
-
-The built files will be in the `dist/` directory.
