@@ -1,7 +1,7 @@
 {
-  "name": "flappy-bird-clone",
+  "name": "gravity-space-game",
   "version": "1.0.0",
-  "description": "A Flappy Bird clone using Phaser 4.0 RC",
+  "description": "A 2D gravity-based space game using Phaser 4.0 RC",
   "type": "module",
   "scripts": {
     "dev": "vite",

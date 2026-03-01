@@ -1,146 +1,436 @@
 import { Game, Scene, GameObjects } from 'phaser';
 
-class FlappyBirdScene extends Scene {
-    private bird!: GameObjects.Rectangle;
-    private pipes: GameObjects.Rectangle[] = [];
-    private score: number = 0;
-    private scoreText!: GameObjects.Text;
-    private gameOver: boolean = false;
+// Physics constants
+const PHYSICS = {
+    G: 100,                          // Gravitational constant
+    DAMPING_WALL: 0.8,              // Wall bounce energy retention
+    DAMPING_OBJECT: 0.9,            // Object collision energy retention
+    MIN_GRAVITY_DISTANCE: 5,        // Prevents division by zero
+    MAX_GRAVITY_DISTANCE: 400,      // Performance optimization
+    MAX_VELOCITY: 500,              // Cap for stability
+    SHIP_MASS: 10,
+    SHIP_RADIUS: 20,
+    ASTEROID_COUNT: 8,
+    ASTEROID_SIZES: [
+        { radius: 15, mass: 225 },
+        { radius: 25, mass: 625 },
+        { radius: 40, mass: 1600 }
+    ]
+};
 
-    private birdVelocity: number = 0;
-    private gravity: number = 0.5;
-    private jumpStrength: number = -10;
-    private pipeGap: number = 150;
-    private pipeSpeed: number = 3;
+interface Asteroid {
+    gameObject: GameObjects.Circle;
+    velocity: { x: number; y: number };
+    mass: number;
+    radius: number;
+}
+
+class GravityGameScene extends Scene {
+    // Player
+    private spaceship!: GameObjects.Graphics;
+    private shipVelocity: { x: number; y: number } = { x: 0, y: 0 };
+    private shipPosition: { x: number; y: number } = { x: 400, y: 300 };
+    private shipMass: number = PHYSICS.SHIP_MASS;
+    private shipRadius: number = PHYSICS.SHIP_RADIUS;
+
+    // Game objects
+    private asteroids: Asteroid[] = [];
+    private wallGraphics!: GameObjects.Graphics;
+    private gravityTimeText!: GameObjects.Text;
+
+    // Physics state
+    private gravityEnabled: boolean = false;
+    private gravityTimer: number = 0;
+
+    // Input
+    private spaceKey!: Phaser.Input.Keyboard.Key;
 
     constructor() {
-        super({ key: 'FlappyBirdScene' });
+        super({ key: 'GravityGameScene' });
     }
 
     create() {
-        // Create bird (simple rectangle)
-        this.bird = this.add.rectangle(100, 300, 30, 30, 0xFFD700);
+        // Create wall border
+        this.wallGraphics = this.add.graphics();
+        this.wallGraphics.lineStyle(4, 0xADD8E6);
+        this.wallGraphics.strokeRect(2, 2, 796, 596);
 
-        // Score text
-        this.scoreText = this.add.text(20, 20, 'Score: 0', {
-            fontSize: '32px',
-            color: '#fff'
+        // Create spaceship (red triangle)
+        this.spaceship = this.add.graphics();
+        this.updateSpaceshipGraphics();
+
+        // Create asteroids
+        this.createAsteroids();
+
+        // Create UI text
+        this.gravityTimeText = this.add.text(750, 20, 'Gravity: 0.0s', {
+            fontSize: '24px',
+            color: '#ffffff'
         });
+        this.gravityTimeText.setOrigin(1, 0);
 
-        // Input handling
-        this.input.on('pointerdown', () => this.jump());
-        this.input.keyboard?.on('keydown-SPACE', () => this.jump());
-
-        // Start spawning pipes
-        this.time.addEvent({
-            delay: 2000,
-            callback: this.spawnPipe,
-            callbackScope: this,
-            loop: true
-        });
+        // Setup input
+        this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     }
 
-    jump() {
-        if (!this.gameOver) {
-            this.birdVelocity = this.jumpStrength;
-        } else {
-            // Restart game
-            this.scene.restart();
-            this.gameOver = false;
-            this.score = 0;
-            this.birdVelocity = 0;
-            this.pipes = [];
-        }
-    }
+    createAsteroids() {
+        const minSpacing = 100; // Minimum distance between asteroids and ship
 
-    spawnPipe() {
-        if (this.gameOver) return;
+        for (let i = 0; i < PHYSICS.ASTEROID_COUNT; i++) {
+            let x: number, y: number;
+            let validPosition = false;
 
-        const gapY = Phaser.Math.Between(100, 400);
+            // Find a valid position with minimum spacing
+            while (!validPosition) {
+                x = Phaser.Math.Between(50, 750);
+                y = Phaser.Math.Between(50, 550);
 
-        // Top pipe
-        const topPipe = this.add.rectangle(
-            800,
-            gapY - this.pipeGap / 2,
-            50,
-            gapY - this.pipeGap / 2,
-            0x00AA00
-        );
-        topPipe.setOrigin(0.5, 1);
+                validPosition = true;
 
-        // Bottom pipe
-        const bottomPipe = this.add.rectangle(
-            800,
-            gapY + this.pipeGap / 2,
-            50,
-            600 - (gapY + this.pipeGap / 2),
-            0x00AA00
-        );
-        bottomPipe.setOrigin(0.5, 0);
+                // Check distance from ship
+                const distToShip = Math.sqrt(
+                    (x - this.shipPosition.x) ** 2 +
+                    (y - this.shipPosition.y) ** 2
+                );
+                if (distToShip < minSpacing) {
+                    validPosition = false;
+                    continue;
+                }
 
-        this.pipes.push(topPipe, bottomPipe);
-    }
-
-    update() {
-        if (this.gameOver) return;
-
-        // Apply gravity
-        this.birdVelocity += this.gravity;
-        this.bird.y += this.birdVelocity;
-
-        // Rotate bird based on velocity
-        this.bird.rotation = Math.min(Math.max(this.birdVelocity / 20, -0.5), 1);
-
-        // Move pipes
-        for (let i = this.pipes.length - 1; i >= 0; i--) {
-            const pipe = this.pipes[i];
-            pipe.x -= this.pipeSpeed;
-
-            // Remove off-screen pipes
-            if (pipe.x < -50) {
-                pipe.destroy();
-                this.pipes.splice(i, 1);
-
-                // Increment score when passing a pipe pair
-                if (i % 2 === 0) {
-                    this.score++;
-                    this.scoreText.setText('Score: ' + this.score);
+                // Check distance from other asteroids
+                for (const asteroid of this.asteroids) {
+                    const distToAsteroid = Math.sqrt(
+                        (x - asteroid.gameObject.x) ** 2 +
+                        (y - asteroid.gameObject.y) ** 2
+                    );
+                    if (distToAsteroid < minSpacing) {
+                        validPosition = false;
+                        break;
+                    }
                 }
             }
 
-            // Check collision
-            if (this.checkCollision(this.bird, pipe)) {
-                this.endGame();
+            // Random size
+            const sizeData = Phaser.Math.RND.pick(PHYSICS.ASTEROID_SIZES);
+
+            // Create asteroid
+            const asteroid = this.add.circle(x, y, sizeData.radius, 0xFFFF00);
+
+            // Random initial velocity
+            const speed = Phaser.Math.FloatBetween(20, 60);
+            const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+
+            this.asteroids.push({
+                gameObject: asteroid,
+                velocity: {
+                    x: Math.cos(angle) * speed,
+                    y: Math.sin(angle) * speed
+                },
+                mass: sizeData.mass,
+                radius: sizeData.radius
+            });
+        }
+    }
+
+    updateSpaceshipGraphics() {
+        this.spaceship.clear();
+        this.spaceship.fillStyle(0xFF0000);
+
+        // Calculate rotation angle based on velocity
+        let angle = 0;
+        if (this.shipVelocity.x !== 0 || this.shipVelocity.y !== 0) {
+            angle = Math.atan2(this.shipVelocity.y, this.shipVelocity.x);
+        }
+
+        // Draw triangle facing the velocity direction
+        const size = 15;
+        const points = [
+            { x: size, y: 0 },      // Tip
+            { x: -size, y: -size }, // Top back
+            { x: -size, y: size }   // Bottom back
+        ];
+
+        // Rotate and translate points
+        const rotatedPoints: { x: number; y: number }[] = [];
+        for (const point of points) {
+            const rotX = point.x * Math.cos(angle) - point.y * Math.sin(angle);
+            const rotY = point.x * Math.sin(angle) + point.y * Math.cos(angle);
+            rotatedPoints.push({
+                x: rotX + this.shipPosition.x,
+                y: rotY + this.shipPosition.y
+            });
+        }
+
+        this.spaceship.fillTriangle(
+            rotatedPoints[0].x, rotatedPoints[0].y,
+            rotatedPoints[1].x, rotatedPoints[1].y,
+            rotatedPoints[2].x, rotatedPoints[2].y
+        );
+    }
+
+    update(time: number, delta: number) {
+        const dt = delta / 1000; // Convert to seconds
+
+        // Update gravity state based on spacebar
+        this.gravityEnabled = this.spaceKey.isDown;
+
+        // Update gravity timer
+        if (this.gravityEnabled) {
+            this.gravityTimer += dt;
+            this.gravityTimeText.setText(`Gravity: ${this.gravityTimer.toFixed(1)}s`);
+        }
+
+        // Apply gravitational forces if enabled
+        if (this.gravityEnabled) {
+            this.applyGravitationalForces(dt);
+        }
+
+        // Integrate velocities into positions
+        this.updatePositions(dt);
+
+        // Check and resolve collisions
+        this.checkWallCollisions();
+        this.checkObjectCollisions();
+
+        // Update visuals
+        this.updateSpaceshipGraphics();
+    }
+
+    applyGravitationalForces(dt: number) {
+        // Ship to asteroids
+        for (const asteroid of this.asteroids) {
+            const dx = asteroid.gameObject.x - this.shipPosition.x;
+            const dy = asteroid.gameObject.y - this.shipPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            // Skip if too far or too close
+            if (distance < PHYSICS.MIN_GRAVITY_DISTANCE || distance > PHYSICS.MAX_GRAVITY_DISTANCE) {
+                continue;
+            }
+
+            // Calculate gravitational force
+            const force = PHYSICS.G * this.shipMass * asteroid.mass / (distance * distance);
+
+            // Normalize direction
+            const nx = dx / distance;
+            const ny = dy / distance;
+
+            // Apply force to ship (attracted to asteroid)
+            const shipAccelX = (force / this.shipMass) * nx;
+            const shipAccelY = (force / this.shipMass) * ny;
+            this.shipVelocity.x += shipAccelX * dt;
+            this.shipVelocity.y += shipAccelY * dt;
+
+            // Apply force to asteroid (attracted to ship)
+            const asteroidAccelX = -(force / asteroid.mass) * nx;
+            const asteroidAccelY = -(force / asteroid.mass) * ny;
+            asteroid.velocity.x += asteroidAccelX * dt;
+            asteroid.velocity.y += asteroidAccelY * dt;
+        }
+
+        // Asteroid to asteroid
+        for (let i = 0; i < this.asteroids.length; i++) {
+            for (let j = i + 1; j < this.asteroids.length; j++) {
+                const a1 = this.asteroids[i];
+                const a2 = this.asteroids[j];
+
+                const dx = a2.gameObject.x - a1.gameObject.x;
+                const dy = a2.gameObject.y - a1.gameObject.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Skip if too far or too close
+                if (distance < PHYSICS.MIN_GRAVITY_DISTANCE || distance > PHYSICS.MAX_GRAVITY_DISTANCE) {
+                    continue;
+                }
+
+                // Calculate gravitational force
+                const force = PHYSICS.G * a1.mass * a2.mass / (distance * distance);
+
+                // Normalize direction
+                const nx = dx / distance;
+                const ny = dy / distance;
+
+                // Apply force to both asteroids
+                const accel1X = (force / a1.mass) * nx;
+                const accel1Y = (force / a1.mass) * ny;
+                a1.velocity.x += accel1X * dt;
+                a1.velocity.y += accel1Y * dt;
+
+                const accel2X = -(force / a2.mass) * nx;
+                const accel2Y = -(force / a2.mass) * ny;
+                a2.velocity.x += accel2X * dt;
+                a2.velocity.y += accel2Y * dt;
+            }
+        }
+    }
+
+    updatePositions(dt: number) {
+        // Cap ship velocity for stability
+        const shipSpeed = Math.sqrt(this.shipVelocity.x ** 2 + this.shipVelocity.y ** 2);
+        if (shipSpeed > PHYSICS.MAX_VELOCITY) {
+            this.shipVelocity.x = (this.shipVelocity.x / shipSpeed) * PHYSICS.MAX_VELOCITY;
+            this.shipVelocity.y = (this.shipVelocity.y / shipSpeed) * PHYSICS.MAX_VELOCITY;
+        }
+
+        // Update ship position
+        this.shipPosition.x += this.shipVelocity.x * dt;
+        this.shipPosition.y += this.shipVelocity.y * dt;
+
+        // Update asteroid positions
+        for (const asteroid of this.asteroids) {
+            // Cap asteroid velocity
+            const speed = Math.sqrt(asteroid.velocity.x ** 2 + asteroid.velocity.y ** 2);
+            if (speed > PHYSICS.MAX_VELOCITY) {
+                asteroid.velocity.x = (asteroid.velocity.x / speed) * PHYSICS.MAX_VELOCITY;
+                asteroid.velocity.y = (asteroid.velocity.y / speed) * PHYSICS.MAX_VELOCITY;
+            }
+
+            asteroid.gameObject.x += asteroid.velocity.x * dt;
+            asteroid.gameObject.y += asteroid.velocity.y * dt;
+        }
+    }
+
+    checkWallCollisions() {
+        // Ship wall collision
+        if (this.shipPosition.x - this.shipRadius < 0) {
+            this.shipPosition.x = this.shipRadius;
+            this.shipVelocity.x = Math.abs(this.shipVelocity.x) * PHYSICS.DAMPING_WALL;
+        }
+        if (this.shipPosition.x + this.shipRadius > 800) {
+            this.shipPosition.x = 800 - this.shipRadius;
+            this.shipVelocity.x = -Math.abs(this.shipVelocity.x) * PHYSICS.DAMPING_WALL;
+        }
+        if (this.shipPosition.y - this.shipRadius < 0) {
+            this.shipPosition.y = this.shipRadius;
+            this.shipVelocity.y = Math.abs(this.shipVelocity.y) * PHYSICS.DAMPING_WALL;
+        }
+        if (this.shipPosition.y + this.shipRadius > 600) {
+            this.shipPosition.y = 600 - this.shipRadius;
+            this.shipVelocity.y = -Math.abs(this.shipVelocity.y) * PHYSICS.DAMPING_WALL;
+        }
+
+        // Asteroid wall collisions
+        for (const asteroid of this.asteroids) {
+            if (asteroid.gameObject.x - asteroid.radius < 0) {
+                asteroid.gameObject.x = asteroid.radius;
+                asteroid.velocity.x = Math.abs(asteroid.velocity.x) * PHYSICS.DAMPING_WALL;
+            }
+            if (asteroid.gameObject.x + asteroid.radius > 800) {
+                asteroid.gameObject.x = 800 - asteroid.radius;
+                asteroid.velocity.x = -Math.abs(asteroid.velocity.x) * PHYSICS.DAMPING_WALL;
+            }
+            if (asteroid.gameObject.y - asteroid.radius < 0) {
+                asteroid.gameObject.y = asteroid.radius;
+                asteroid.velocity.y = Math.abs(asteroid.velocity.y) * PHYSICS.DAMPING_WALL;
+            }
+            if (asteroid.gameObject.y + asteroid.radius > 600) {
+                asteroid.gameObject.y = 600 - asteroid.radius;
+                asteroid.velocity.y = -Math.abs(asteroid.velocity.y) * PHYSICS.DAMPING_WALL;
+            }
+        }
+    }
+
+    checkObjectCollisions() {
+        // Ship to asteroid collisions
+        for (const asteroid of this.asteroids) {
+            const dx = asteroid.gameObject.x - this.shipPosition.x;
+            const dy = asteroid.gameObject.y - this.shipPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDist = this.shipRadius + asteroid.radius;
+
+            if (distance < minDist) {
+                // Collision detected - resolve it
+
+                // Normalize collision vector
+                const nx = dx / distance;
+                const ny = dy / distance;
+
+                // Separate objects
+                const overlap = minDist - distance;
+                const totalMass = this.shipMass + asteroid.mass;
+                const shipSeparation = (asteroid.mass / totalMass) * overlap;
+                const asteroidSeparation = (this.shipMass / totalMass) * overlap;
+
+                this.shipPosition.x -= nx * shipSeparation;
+                this.shipPosition.y -= ny * shipSeparation;
+                asteroid.gameObject.x += nx * asteroidSeparation;
+                asteroid.gameObject.y += ny * asteroidSeparation;
+
+                // Calculate relative velocity
+                const dvx = asteroid.velocity.x - this.shipVelocity.x;
+                const dvy = asteroid.velocity.y - this.shipVelocity.y;
+
+                // Velocity along collision normal
+                const dvn = dvx * nx + dvy * ny;
+
+                // Don't resolve if objects are moving apart
+                if (dvn < 0) {
+                    continue;
+                }
+
+                // Calculate impulse
+                const impulse = (2 * dvn) / (1 / this.shipMass + 1 / asteroid.mass);
+
+                // Apply impulse with damping
+                this.shipVelocity.x += (impulse / this.shipMass) * nx * PHYSICS.DAMPING_OBJECT;
+                this.shipVelocity.y += (impulse / this.shipMass) * ny * PHYSICS.DAMPING_OBJECT;
+                asteroid.velocity.x -= (impulse / asteroid.mass) * nx * PHYSICS.DAMPING_OBJECT;
+                asteroid.velocity.y -= (impulse / asteroid.mass) * ny * PHYSICS.DAMPING_OBJECT;
             }
         }
 
-        // Check if bird hits ground or ceiling
-        if (this.bird.y > 600 || this.bird.y < 0) {
-            this.endGame();
+        // Asteroid to asteroid collisions
+        for (let i = 0; i < this.asteroids.length; i++) {
+            for (let j = i + 1; j < this.asteroids.length; j++) {
+                const a1 = this.asteroids[i];
+                const a2 = this.asteroids[j];
+
+                const dx = a2.gameObject.x - a1.gameObject.x;
+                const dy = a2.gameObject.y - a1.gameObject.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                const minDist = a1.radius + a2.radius;
+
+                if (distance < minDist) {
+                    // Collision detected - resolve it
+
+                    // Normalize collision vector
+                    const nx = dx / distance;
+                    const ny = dy / distance;
+
+                    // Separate objects
+                    const overlap = minDist - distance;
+                    const totalMass = a1.mass + a2.mass;
+                    const a1Separation = (a2.mass / totalMass) * overlap;
+                    const a2Separation = (a1.mass / totalMass) * overlap;
+
+                    a1.gameObject.x -= nx * a1Separation;
+                    a1.gameObject.y -= ny * a1Separation;
+                    a2.gameObject.x += nx * a2Separation;
+                    a2.gameObject.y += ny * a2Separation;
+
+                    // Calculate relative velocity
+                    const dvx = a2.velocity.x - a1.velocity.x;
+                    const dvy = a2.velocity.y - a1.velocity.y;
+
+                    // Velocity along collision normal
+                    const dvn = dvx * nx + dvy * ny;
+
+                    // Don't resolve if objects are moving apart
+                    if (dvn < 0) {
+                        continue;
+                    }
+
+                    // Calculate impulse
+                    const impulse = (2 * dvn) / (1 / a1.mass + 1 / a2.mass);
+
+                    // Apply impulse with damping
+                    a1.velocity.x += (impulse / a1.mass) * nx * PHYSICS.DAMPING_OBJECT;
+                    a1.velocity.y += (impulse / a1.mass) * ny * PHYSICS.DAMPING_OBJECT;
+                    a2.velocity.x -= (impulse / a2.mass) * nx * PHYSICS.DAMPING_OBJECT;
+                    a2.velocity.y -= (impulse / a2.mass) * ny * PHYSICS.DAMPING_OBJECT;
+                }
+            }
         }
-    }
-
-    checkCollision(bird: GameObjects.Rectangle, pipe: GameObjects.Rectangle): boolean {
-        const birdBounds = bird.getBounds();
-        const pipeBounds = pipe.getBounds();
-
-        return Phaser.Geom.Intersects.RectangleToRectangle(birdBounds, pipeBounds);
-    }
-
-    endGame() {
-        this.gameOver = true;
-
-        const gameOverText = this.add.text(400, 250, 'GAME OVER', {
-            fontSize: '64px',
-            color: '#ff0000'
-        });
-        gameOverText.setOrigin(0.5);
-
-        const restartText = this.add.text(400, 330, 'Click or press SPACE to restart', {
-            fontSize: '24px',
-            color: '#fff'
-        });
-        restartText.setOrigin(0.5);
     }
 }
 
@@ -150,8 +440,8 @@ const config: Phaser.Types.Core.GameConfig = {
     width: 800,
     height: 600,
     parent: document.body,
-    backgroundColor: '#87CEEB',
-    scene: FlappyBirdScene
+    backgroundColor: '#000000',
+    scene: GravityGameScene
 };
 
 // Start the game
