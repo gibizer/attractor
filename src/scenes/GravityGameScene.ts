@@ -54,6 +54,7 @@ export class GravityGameScene extends Scene {
 
     // Input
     private spaceKey!: Phaser.Input.Keyboard.Key;
+    private pointerDown: boolean = false;
 
     constructor() {
         super({ key: 'GravityGameScene' });
@@ -225,6 +226,15 @@ export class GravityGameScene extends Scene {
         this.spaceKey = this.input.keyboard!.addKey(
             Phaser.Input.Keyboard.KeyCodes.SPACE
         );
+
+        // Add pointer/touch support for mobile
+        this.input.on('pointerdown', () => {
+            this.pointerDown = true;
+        });
+
+        this.input.on('pointerup', () => {
+            this.pointerDown = false;
+        });
     }
 
     update(time: number, delta: number) {
@@ -253,7 +263,7 @@ export class GravityGameScene extends Scene {
     }
 
     private updateInput(): void {
-        this.gravityEnabled = this.spaceKey.isDown;
+        this.gravityEnabled = this.spaceKey.isDown || this.pointerDown;
     }
 
     private updatePhysics(dt: number): void {
