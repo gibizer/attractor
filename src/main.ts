@@ -32,6 +32,8 @@ class GravityGameScene extends Scene {
     private shipPosition: { x: number; y: number } = { x: 400, y: 300 };
     private shipMass: number = PHYSICS.SHIP_MASS;
     private shipRadius: number = PHYSICS.SHIP_RADIUS;
+    private shipTrail: Array<{ x: number; y: number }> = [];
+    private readonly MAX_TRAIL_LENGTH = 60;
 
     // Game objects
     private asteroids: Asteroid[] = [];
@@ -135,6 +137,23 @@ class GravityGameScene extends Scene {
     updateSpaceshipGraphics() {
         this.spaceship.clear();
 
+        // Draw trail (fading line behind ship)
+        if (this.shipTrail.length > 1) {
+            for (let i = 0; i < this.shipTrail.length - 1; i++) {
+                const t = (i + 1) / this.shipTrail.length;
+                const alpha = Math.sqrt(t); // Square root for slower fade
+                const width = 4 + (alpha * 4); // Width from 4 to 8
+                const trailColor = this.gravityEnabled ? 0xFF8C00 : 0xFF0000;
+                this.spaceship.lineStyle(width, trailColor, alpha * 0.8);
+                this.spaceship.lineBetween(
+                    this.shipTrail[i].x,
+                    this.shipTrail[i].y,
+                    this.shipTrail[i + 1].x,
+                    this.shipTrail[i + 1].y
+                );
+            }
+        }
+
         // Draw bounding circle (dashed, light blue)
         this.spaceship.lineStyle(2, 0xADD8E6);
         const segments = 24; // Number of segments for dashed effect
@@ -208,6 +227,12 @@ class GravityGameScene extends Scene {
         // Check and resolve collisions
         this.checkWallCollisions();
         this.checkObjectCollisions();
+
+        // Update trail
+        this.shipTrail.push({ x: this.shipPosition.x, y: this.shipPosition.y });
+        if (this.shipTrail.length > this.MAX_TRAIL_LENGTH) {
+            this.shipTrail.shift();
+        }
 
         // Update visuals
         this.updateSpaceshipGraphics();
