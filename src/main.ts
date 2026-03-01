@@ -2,11 +2,11 @@ import { Game, Scene, GameObjects } from 'phaser';
 
 // Physics constants
 const PHYSICS = {
-    G: 100,                          // Gravitational constant
+    G: 5,                         // Gravitational constant (increased for single inverse)
     DAMPING_WALL: 0.8,              // Wall bounce energy retention
     DAMPING_OBJECT: 0.9,            // Object collision energy retention
-    MIN_GRAVITY_DISTANCE: 5,        // Prevents division by zero
-    MAX_GRAVITY_DISTANCE: 400,      // Performance optimization
+    MIN_GRAVITY_DISTANCE: 1,        // Prevents division by zero
+    MAX_GRAVITY_DISTANCE: 600,      // Maximum attraction distance (increased for longer range)
     MAX_VELOCITY: 500,              // Cap for stability
     SHIP_MASS: 10,
     SHIP_RADIUS: 20,
@@ -271,8 +271,8 @@ class GravityGameScene extends Scene {
                 continue;
             }
 
-            // Calculate gravitational force
-            const force = PHYSICS.G * this.shipMass * asteroid.mass / (distance * distance);
+            // Calculate gravitational force with single inverse
+            const force = PHYSICS.G * this.shipMass * asteroid.mass / distance;
 
             // Normalize direction
             const nx = dx / distance;
@@ -306,8 +306,8 @@ class GravityGameScene extends Scene {
                     continue;
                 }
 
-                // Calculate gravitational force
-                const force = PHYSICS.G * a1.mass * a2.mass / (distance * distance);
+                // Calculate gravitational force with single inverse
+                const force = PHYSICS.G * a1.mass * a2.mass / distance;
 
                 // Normalize direction
                 const nx = dx / distance;
