@@ -7,7 +7,7 @@ import { Vector2D } from '../types/GameObject';
 export class SpaceshipRenderer {
     private graphics: GameObjects.Graphics;
     private trail: Vector2D[] = [];
-    private readonly MAX_TRAIL_LENGTH = 60;
+    private readonly MAX_TRAIL_LENGTH = 40;
 
     constructor(graphics: GameObjects.Graphics) {
         this.graphics = graphics;

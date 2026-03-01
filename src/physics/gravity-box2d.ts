@@ -31,7 +31,8 @@ export function applyShipAsteroidGravityBox2D(
         }
 
         // Calculate gravitational force with single inverse
-        const force = PHYSICS.G * shipMass * asteroid.mass / distance;
+        
+        const force = PHYSICS.G * shipMass * asteroid.mass / Math.pow(distance, PHYSICS.G_DISTANCE_POW);
 
         // Normalize direction
         const nx = dx / distance;
@@ -69,7 +70,7 @@ export function applyAsteroidAsteroidGravityBox2D(asteroids: Asteroid[]): void {
             }
 
             // Calculate gravitational force with single inverse
-            const force = PHYSICS.G * a1.mass * a2.mass / distance;
+            const force = PHYSICS.G * a1.mass * a2.mass / Math.pow(distance, PHYSICS.G_DISTANCE_POW);
 
             // Normalize direction
             const nx = dx / distance;
