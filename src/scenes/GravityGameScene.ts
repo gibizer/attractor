@@ -67,6 +67,11 @@ export class GravityGameScene extends Scene {
         super({ key: 'GravityGameScene' });
     }
 
+    preload() {
+        // Load background image
+        this.load.image('background', 'background.jpg');
+    }
+
     create() {
         // Reset ship state
         this.shipPosition = {
@@ -85,6 +90,15 @@ export class GravityGameScene extends Scene {
 
         // Setup collision listener
         this.collisionListener = new CollisionListener();
+
+        // Add background image
+        const background = this.add.image(
+            WORLD.WIDTH / 2,
+            WORLD.HEIGHT / 2,
+            'background'
+        );
+        // Scale to cover the game area
+        background.setDisplaySize(WORLD.WIDTH, WORLD.HEIGHT);
 
         this.createWalls();
         this.createTarget();
