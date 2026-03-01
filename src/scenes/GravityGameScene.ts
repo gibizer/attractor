@@ -16,6 +16,7 @@ import {
     b2DefaultBodyDef,
     b2DefaultShapeDef,
     b2World_GetContactEvents,
+    b2World_Step,
     b2Body_SetLinearVelocity,
     b2Body_GetPosition,
     b2Body_GetLinearVelocity,
@@ -250,7 +251,7 @@ export class GravityGameScene extends Scene {
         }
 
         // Step the Box2D world
-        this.box2dWorld.stepWorld(dt, 4);
+        b2World_Step(this.box2dWorld.worldId, dt, 4);
 
         // Process contact events for collision counting
         const contactEvents = b2World_GetContactEvents(this.box2dWorld.worldId);
