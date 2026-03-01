@@ -5,6 +5,7 @@ A minimal Flappy Bird clone built with TypeScript and Phaser 4.0 RC.
 ## Setup
 
 Install dependencies:
+
 ```bash
 npm install
 ```
@@ -12,6 +13,7 @@ npm install
 ## Running the Game
 
 Start the development server:
+
 ```bash
 npm run dev
 ```

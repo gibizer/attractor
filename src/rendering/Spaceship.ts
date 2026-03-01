@@ -7,7 +7,7 @@ import { Vector2D } from '../types/GameObject';
 export class SpaceshipRenderer {
     private graphics: GameObjects.Graphics;
     private trail: Vector2D[] = [];
-    private readonly MAX_TRAIL_LENGTH = 60;
+    private readonly MAX_TRAIL_LENGTH = 40;
 
     constructor(graphics: GameObjects.Graphics) {
         this.graphics = graphics;
@@ -48,8 +48,8 @@ export class SpaceshipRenderer {
         for (let i = 0; i < this.trail.length - 1; i++) {
             const t = (i + 1) / this.trail.length;
             const alpha = Math.sqrt(t); // Square root for slower fade
-            const width = 4 + (alpha * 4); // Width from 4 to 8
-            const trailColor = gravityEnabled ? 0xFF8C00 : 0xFF0000;
+            const width = 4 + alpha * 4; // Width from 4 to 8
+            const trailColor = gravityEnabled ? 0xff8c00 : 0xff0000;
             this.graphics.lineStyle(width, trailColor, alpha * 0.8);
             this.graphics.lineBetween(
                 this.trail[i].x,
@@ -64,7 +64,7 @@ export class SpaceshipRenderer {
      * Render the dashed bounding circle
      */
     private renderBoundingCircle(position: Vector2D, radius: number): void {
-        this.graphics.lineStyle(2, 0xADD8E6);
+        this.graphics.lineStyle(2, 0xadd8e6);
         const segments = 24; // Number of segments for dashed effect
         const dashLength = (Math.PI * 2) / segments;
 
@@ -88,7 +88,7 @@ export class SpaceshipRenderer {
         gravityEnabled: boolean
     ): void {
         // Draw spaceship triangle (red when gravity off, orange when gravity on)
-        const shipColor = gravityEnabled ? 0xFF8C00 : 0xFF0000;
+        const shipColor = gravityEnabled ? 0xff8c00 : 0xff0000;
         this.graphics.fillStyle(shipColor);
 
         // Calculate rotation angle based on velocity
@@ -100,9 +100,9 @@ export class SpaceshipRenderer {
         // Draw triangle facing the velocity direction
         const size = 15;
         const points = [
-            { x: size, y: 0 },      // Tip
+            { x: size, y: 0 }, // Tip
             { x: -size, y: -size }, // Top back
-            { x: -size, y: size }   // Bottom back
+            { x: -size, y: size }, // Bottom back
         ];
 
         // Rotate and translate points
@@ -112,14 +112,17 @@ export class SpaceshipRenderer {
             const rotY = point.x * Math.sin(angle) + point.y * Math.cos(angle);
             rotatedPoints.push({
                 x: rotX + position.x,
-                y: rotY + position.y
+                y: rotY + position.y,
             });
         }
 
         this.graphics.fillTriangle(
-            rotatedPoints[0].x, rotatedPoints[0].y,
-            rotatedPoints[1].x, rotatedPoints[1].y,
-            rotatedPoints[2].x, rotatedPoints[2].y
+            rotatedPoints[0].x,
+            rotatedPoints[0].y,
+            rotatedPoints[1].x,
+            rotatedPoints[1].y,
+            rotatedPoints[2].x,
+            rotatedPoints[2].y
         );
     }
 }
