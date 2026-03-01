@@ -68,6 +68,16 @@ export class GravityGameScene extends Scene {
     }
 
     create() {
+        // Reset ship state
+        this.shipPosition = {
+            x: WORLD.WIDTH / 2,
+            y: WORLD.HEIGHT * 0.9,
+        };
+        this.shipVelocity = { x: 0, y: 0 };
+        this.gravityEnabled = false;
+        this.gravityTimer = 0;
+        this.asteroids = [];
+
         // Create Box2D world
         const worldDef = b2DefaultWorldDef();
         worldDef.gravity = new b2Vec2(0, 0); // No uniform gravity (N-body only)
