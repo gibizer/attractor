@@ -55,8 +55,12 @@ export class CollisionListener {
 
         for (const event of beginEvents) {
             // Get body IDs from shape IDs
-            const bodyA = event.shapeIdA ? b2Shape_GetBody(event.shapeIdA) : null;
-            const bodyB = event.shapeIdB ? b2Shape_GetBody(event.shapeIdB) : null;
+            const bodyA = event.shapeIdA
+                ? b2Shape_GetBody(event.shapeIdA)
+                : null;
+            const bodyB = event.shapeIdB
+                ? b2Shape_GetBody(event.shapeIdB)
+                : null;
 
             if (!bodyA || !bodyB) continue;
 

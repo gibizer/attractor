@@ -12,8 +12,8 @@ export const PHYSICS = {
     ASTEROID_COUNT: 4,
     ASTEROID_SIZES: [
         { radius: 10, mass: 40 },
-        { radius: 40, mass: 160 },
-        { radius: 60, mass: 240 },
+        { radius: 30, mass: 120 },
+        { radius: 50, mass: 200 },
     ],
 };
 

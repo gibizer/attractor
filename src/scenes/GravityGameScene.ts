@@ -244,7 +244,8 @@ export class GravityGameScene extends Scene {
             // Create visual representation using asteroid sprite
             const asteroidSprite = this.add.image(x, y, 'asteroid');
             // Scale sprite to match asteroid radius (diameter = radius * 2, increased by 20% to fill collision circle)
-            const spriteScale = (sizeData.radius * 2 * 1.9) / asteroidSprite.width;
+            const spriteScale =
+                (sizeData.radius * 2 * 1.9) / asteroidSprite.width;
             asteroidSprite.setScale(spriteScale);
 
             // Random initial velocity
