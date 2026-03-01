@@ -26,3 +26,11 @@ export const WORLD = {
     WIDTH: 400,
     HEIGHT: 700,
 };
+
+export const TARGET = {
+    WIDTH: 40, // Full width in pixels
+    HEIGHT: 20, // Full height in pixels
+    X: WORLD.WIDTH / 2, // Centered horizontally (200px)
+    Y: 30, // Near top of screen
+    COLOR: 0x00ff00, // Green
+};

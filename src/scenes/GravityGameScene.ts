@@ -1,5 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
-import { PHYSICS, WORLD } from '../config/physics';
+import { PHYSICS, WORLD, TARGET } from '../config/physics';
 import { Asteroid, Vector2D } from '../types/GameObject';
 import {
     applyShipAsteroidGravityBox2D,
@@ -17,6 +17,7 @@ import {
     CreateWorld,
     b2DefaultWorldDef,
     CreateCircle,
+    CreateBoxPolygon,
     b2CreateSegmentShape,
     b2CreateBody,
     b2DefaultBodyDef,
@@ -26,6 +27,7 @@ import {
     b2Body_SetLinearVelocity,
     b2Body_GetPosition,
     b2Body_GetLinearVelocity,
+    b2Shape_EnableContactEvents,
     b2Vec2,
     STATIC,
 } from '../PhaserBox2D.js';
@@ -45,6 +47,8 @@ export class GravityGameScene extends Scene {
     // Game objects
     private asteroids: Asteroid[] = [];
     private wallGraphics!: GameObjects.Graphics;
+    private targetGraphics!: GameObjects.Graphics;
+    private targetBody!: any; // Box2D Body
 
     // UI
     private ui!: GameUI;
@@ -73,6 +77,7 @@ export class GravityGameScene extends Scene {
         this.collisionListener = new CollisionListener();
 
         this.createWalls();
+        this.createTarget();
         this.createSpaceship();
         this.createAsteroids();
         this.createUI();
@@ -117,6 +122,33 @@ export class GravityGameScene extends Scene {
         }
     }
 
+    private createTarget(): void {
+        // Visual representation (green filled rectangle)
+        this.targetGraphics = this.add.graphics();
+        this.targetGraphics.fillStyle(TARGET.COLOR, 1.0);
+        this.targetGraphics.fillRect(
+            TARGET.X - TARGET.WIDTH / 2, // Graphics uses top-left corner
+            TARGET.Y - TARGET.HEIGHT / 2,
+            TARGET.WIDTH,
+            TARGET.HEIGHT
+        );
+
+        // Box2D static body (uses center position)
+        this.targetBody = CreateBoxPolygon({
+            worldId: this.box2dWorld.worldId,
+            type: STATIC,
+            position: new b2Vec2(TARGET.X, TARGET.Y),
+            size: new b2Vec2(TARGET.WIDTH / 2, TARGET.HEIGHT / 2), // half-extents
+            restitution: PHYSICS.DAMPING_WALL, // Same bounce as walls
+        });
+
+        // Enable contact events for collision detection
+        b2Shape_EnableContactEvents(this.targetBody.shapeId, true);
+
+        // Register target body with collision listener
+        this.collisionListener.setTargetBody(this.targetBody.bodyId);
+    }
+
     private createSpaceship(): void {
         const graphics = this.add.graphics();
         this.spaceshipRenderer = new SpaceshipRenderer(graphics);
@@ -131,6 +163,9 @@ export class GravityGameScene extends Scene {
                 this.shipMass / (Math.PI * this.shipRadius * this.shipRadius),
             restitution: PHYSICS.DAMPING_OBJECT,
         });
+
+        // Enable contact events for collision detection
+        b2Shape_EnableContactEvents(this.shipBody.shapeId, true);
 
         // Register ship body ID with collision listener
         this.collisionListener.setShipBody(this.shipBody.bodyId);
@@ -205,6 +240,9 @@ export class GravityGameScene extends Scene {
 
             // Set initial velocity
             b2Body_SetLinearVelocity(body.bodyId, new b2Vec2(vx, vy));
+
+            // Enable contact events for collision detection
+            b2Shape_EnableContactEvents(body.shapeId, true);
 
             const asteroid: Asteroid = {
                 gameObject: asteroidGraphics,
@@ -299,6 +337,12 @@ export class GravityGameScene extends Scene {
             this.box2dWorld.worldId
         );
         this.collisionListener.processContactEvents(contactEvents);
+
+        // Check if ship hit target and restart if so
+        if (this.collisionListener.checkShipTargetCollision()) {
+            this.scene.restart();
+            return; // Exit early, scene will be recreated
+        }
 
         // Sync Box2D body positions to sprite positions
         this.syncSprites();

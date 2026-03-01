@@ -36,16 +36,16 @@ export class GameUI {
         this.velocityText.setOrigin(1, 0);
 
         // Create collision counter (below velocity)
-        // this.collisionText = scene.add.text(
-        //     WORLD.WIDTH - 50,
-        //     80,
-        //     'Collisions: 0',
-        //     {
-        //         fontSize: '24px',
-        //         color: '#ffffff',
-        //     }
-        // );
-        // this.collisionText.setOrigin(1, 0);
+        this.collisionText = scene.add.text(
+            WORLD.WIDTH - 50,
+            80,
+            'Collisions: 0',
+            {
+                fontSize: '24px',
+                color: '#ffffff',
+            }
+        );
+        this.collisionText.setOrigin(1, 0);
 
         // Create FPS counter (top left)
         this.fpsText = scene.add.text(20, 20, 'FPS: 0', {
@@ -79,6 +79,6 @@ export class GameUI {
      * Update the collision counter
      */
     updateCollisions(count: number): void {
-        //this.collisionText.setText(`Collisions: ${count}`);
+        this.collisionText.setText(`Collisions: ${count}`);
     }
 }

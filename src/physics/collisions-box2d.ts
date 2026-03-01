@@ -4,6 +4,7 @@ import { PHYSICS } from '../config/physics';
 import {
     b2Body_GetLinearVelocity,
     b2Body_SetLinearVelocity,
+    b2Shape_GetBody,
     b2Vec2,
 } from '../PhaserBox2D.js';
 
@@ -14,6 +15,8 @@ export class CollisionListener {
     private collisionCount: number = 0;
     private shipBodyId: any = null;
     private asteroidBodyIds: Set<any> = new Set();
+    private targetBodyId: any = null;
+    private shipHitTarget: boolean = false;
 
     setShipBody(bodyId: any): void {
         this.shipBodyId = bodyId;
@@ -21,6 +24,10 @@ export class CollisionListener {
 
     addAsteroidBody(bodyId: any): void {
         this.asteroidBodyIds.add(bodyId);
+    }
+
+    setTargetBody(bodyId: any): void {
+        this.targetBodyId = bodyId;
     }
 
     getCollisionCount(): number {
@@ -31,6 +38,14 @@ export class CollisionListener {
         this.collisionCount = 0;
     }
 
+    checkShipTargetCollision(): boolean {
+        return this.shipHitTarget;
+    }
+
+    resetShipTargetCollision(): void {
+        this.shipHitTarget = false;
+    }
+
     /**
      * Process contact events from Box2D world
      */
@@ -39,9 +54,9 @@ export class CollisionListener {
         const beginEvents = contactEvents.beginEvents || [];
 
         for (const event of beginEvents) {
-            // Check if bodyIdA or bodyIdB match ship or asteroids
-            const bodyA = event.shapeIdA?.bodyId;
-            const bodyB = event.shapeIdB?.bodyId;
+            // Get body IDs from shape IDs
+            const bodyA = event.shapeIdA ? b2Shape_GetBody(event.shapeIdA) : null;
+            const bodyB = event.shapeIdB ? b2Shape_GetBody(event.shapeIdB) : null;
 
             if (!bodyA || !bodyB) continue;
 
@@ -50,9 +65,17 @@ export class CollisionListener {
             const bIsShip = this.bodyIdsEqual(bodyB, this.shipBodyId);
             const aIsAsteroid = this.isAsteroidBody(bodyA);
             const bIsAsteroid = this.isAsteroidBody(bodyB);
+            const aIsTarget = this.bodyIdsEqual(bodyA, this.targetBodyId);
+            const bIsTarget = this.bodyIdsEqual(bodyB, this.targetBodyId);
 
+            // Ship-asteroid collision
             if ((aIsShip && bIsAsteroid) || (bIsShip && aIsAsteroid)) {
                 this.collisionCount++;
+            }
+
+            // Ship-target collision
+            if ((aIsShip && bIsTarget) || (bIsShip && aIsTarget)) {
+                this.shipHitTarget = true;
             }
         }
     }
@@ -74,6 +97,7 @@ export class CollisionListener {
     destroy(): void {
         this.asteroidBodyIds.clear();
         this.shipBodyId = null;
+        this.targetBodyId = null;
     }
 }
 
