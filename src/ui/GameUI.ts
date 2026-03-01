@@ -11,47 +11,51 @@ export class GameUI {
     private fpsText: GameObjects.Text;
 
     constructor(scene: Scene) {
-        // Create gravity timer text (top right)
+        // Create gravity timer text (above game area, top right)
         this.gravityTimeText = scene.add.text(
-            WORLD.WIDTH - 50,
-            20,
+            WORLD.WIDTH - 10,
+            10,
             'Gravity: 0.0s',
             {
-                fontSize: '24px',
+                fontSize: '18px',
                 color: '#ffffff',
             }
         );
         this.gravityTimeText.setOrigin(1, 0);
+        this.gravityTimeText.setScrollFactor(0); // Fixed to screen, not world
 
-        // Create velocity text (below gravity timer)
+        // Create velocity text (above game area, middle)
         this.velocityText = scene.add.text(
-            WORLD.WIDTH - 50,
-            50,
+            WORLD.WIDTH / 2 - 35,
+            10,
             'Velocity: 0',
             {
-                fontSize: '24px',
+                fontSize: '18px',
                 color: '#ffffff',
             }
         );
-        this.velocityText.setOrigin(1, 0);
+        this.velocityText.setOrigin(0.5, 0);
+        this.velocityText.setScrollFactor(0); // Fixed to screen, not world
 
-        // Create collision counter (below velocity)
+        // Create collision counter (above game area, middle-right)
         this.collisionText = scene.add.text(
-            WORLD.WIDTH - 50,
-            80,
+            WORLD.WIDTH / 2 - 30,
+            30,
             'Collisions: 0',
             {
-                fontSize: '24px',
+                fontSize: '18px',
                 color: '#ffffff',
             }
         );
-        this.collisionText.setOrigin(1, 0);
+        this.collisionText.setOrigin(0.5, 0);
+        this.collisionText.setScrollFactor(0); // Fixed to screen, not world
 
-        // Create FPS counter (top left)
-        this.fpsText = scene.add.text(20, 20, 'FPS: 0', {
-            fontSize: '24px',
+        // Create FPS counter (above game area, top left)
+        this.fpsText = scene.add.text(10, 10, 'FPS: 0', {
+            fontSize: '18px',
             color: '#ffffff',
         });
+        this.fpsText.setScrollFactor(0); // Fixed to screen, not world
     }
 
     /**

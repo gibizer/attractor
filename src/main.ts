@@ -6,7 +6,7 @@ import { WORLD } from './config/physics';
 const config: Phaser.Types.Core.GameConfig = {
     type: Phaser.AUTO,
     width: WORLD.WIDTH,
-    height: WORLD.HEIGHT,
+    height: WORLD.HEIGHT + 50, // Extra space for UI above game area
     parent: document.body,
     backgroundColor: '#000000',
     scene: GravityGameScene,

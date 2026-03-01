@@ -24,7 +24,7 @@ export const VISUAL = {
 
 export const WORLD = {
     WIDTH: 400,
-    HEIGHT: 700,
+    HEIGHT: 680,
 };
 
 export const TARGET = {

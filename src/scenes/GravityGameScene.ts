@@ -82,6 +82,9 @@ export class GravityGameScene extends Scene {
         this.createAsteroids();
         this.createUI();
         this.setupInput();
+
+        // Scroll camera to show game world below UI area
+        this.cameras.main.setScroll(0, -50);
     }
 
     private createWalls(): void {
