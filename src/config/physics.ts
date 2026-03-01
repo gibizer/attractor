@@ -8,13 +8,18 @@ export const PHYSICS = {
     MAX_GRAVITY_DISTANCE: 6000, // Maximum attraction distance (increased for longer range)
     MAX_VELOCITY: 500, // Cap for stability
     SHIP_MASS: 40,
-    SHIP_RADIUS: 20,
+    SHIP_RADIUS: 15,
     ASTEROID_COUNT: 8,
     ASTEROID_SIZES: [
         { radius: 10, mass: 40 },
         { radius: 40, mass: 160 },
         { radius: 60, mass: 240 },
     ],
+};
+
+// Visual constants
+export const VISUAL = {
+    SHIP_TRIANGLE_SIZE: PHYSICS.SHIP_RADIUS * 0.75, // Triangle size relative to radius
 };
 
 export const WORLD = {

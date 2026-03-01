@@ -1,5 +1,6 @@
 import { GameObjects } from 'phaser';
 import { Vector2D } from '../types/GameObject';
+import { VISUAL } from '../config/physics';
 
 /**
  * Renders the spaceship with trail and bounding circle
@@ -98,7 +99,7 @@ export class SpaceshipRenderer {
         }
 
         // Draw triangle facing the velocity direction
-        const size = 15;
+        const size = VISUAL.SHIP_TRIANGLE_SIZE;
         const points = [
             { x: size, y: 0 }, // Tip
             { x: -size, y: -size }, // Top back
