@@ -1,16 +1,27 @@
 import { Scene, GameObjects } from 'phaser';
 import { PHYSICS, WORLD } from '../config/physics';
 import { Asteroid, Vector2D } from '../types/GameObject';
-import { applyShipAsteroidGravity, applyAsteroidAsteroidGravity } from '../physics/gravity';
-import {
-    checkShipWallCollisions,
-    checkAsteroidWallCollisions,
-    checkShipAsteroidCollisions,
-    checkAsteroidAsteroidCollisions,
-    capVelocity
-} from '../physics/collisions';
+import { applyShipAsteroidGravityBox2D, applyAsteroidAsteroidGravityBox2D } from '../physics/gravity-box2d';
+import { CollisionListener, capVelocityBox2D } from '../physics/collisions-box2d';
 import { SpaceshipRenderer } from '../rendering/Spaceship';
 import { GameUI } from '../ui/GameUI';
+
+// @ts-ignore - Box2D module doesn't have TypeScript declarations
+import {
+    CreateWorld,
+    b2DefaultWorldDef,
+    CreateCircle,
+    b2CreateSegmentShape,
+    b2CreateBody,
+    b2DefaultBodyDef,
+    b2DefaultShapeDef,
+    b2World_GetContactEvents,
+    b2Body_SetLinearVelocity,
+    b2Body_GetPosition,
+    b2Body_GetLinearVelocity,
+    b2Vec2,
+    STATIC
+} from '../PhaserBox2D.js';
 
 export class GravityGameScene extends Scene {
     // Player
@@ -19,6 +30,7 @@ export class GravityGameScene extends Scene {
     private shipPosition: Vector2D = { x: 400, y: 300 };
     private shipMass: number = PHYSICS.SHIP_MASS;
     private shipRadius: number = PHYSICS.SHIP_RADIUS;
+    private shipBody!: any;  // Box2D Body
 
     // Game objects
     private asteroids: Asteroid[] = [];
@@ -27,10 +39,11 @@ export class GravityGameScene extends Scene {
     // UI
     private ui!: GameUI;
 
-    // Physics state
+    // Physics
+    private box2dWorld!: any;  // Box2D World
+    private collisionListener!: CollisionListener;
     private gravityEnabled: boolean = false;
     private gravityTimer: number = 0;
-    private totalCollisions: number = 0;
 
     // Input
     private spaceKey!: Phaser.Input.Keyboard.Key;
@@ -40,6 +53,14 @@ export class GravityGameScene extends Scene {
     }
 
     create() {
+        // Create Box2D world
+        const worldDef = b2DefaultWorldDef();
+        worldDef.gravity = new b2Vec2(0, 0);  // No uniform gravity (N-body only)
+        this.box2dWorld = CreateWorld({ worldDef });
+
+        // Setup collision listener
+        this.collisionListener = new CollisionListener();
+
         this.createWalls();
         this.createSpaceship();
         this.createAsteroids();
@@ -48,14 +69,53 @@ export class GravityGameScene extends Scene {
     }
 
     private createWalls(): void {
+        // Visual representation
         this.wallGraphics = this.add.graphics();
         this.wallGraphics.lineStyle(4, 0xADD8E6);
         this.wallGraphics.strokeRect(2, 2, WORLD.WIDTH - 4, WORLD.HEIGHT - 4);
+
+        // Box2D edge boundaries - create static body
+        const bodyDef = b2DefaultBodyDef();
+        bodyDef.type = STATIC;
+        const wallBody = b2CreateBody(this.box2dWorld.worldId, bodyDef);
+
+        // Create edge shapes forming boundary
+        const shapeDef = b2DefaultShapeDef();
+        shapeDef.restitution = PHYSICS.DAMPING_WALL;
+
+        const edges = [
+            // Top wall
+            { p1: new b2Vec2(0, 0), p2: new b2Vec2(WORLD.WIDTH, 0) },
+            // Right wall
+            { p1: new b2Vec2(WORLD.WIDTH, 0), p2: new b2Vec2(WORLD.WIDTH, WORLD.HEIGHT) },
+            // Bottom wall
+            { p1: new b2Vec2(WORLD.WIDTH, WORLD.HEIGHT), p2: new b2Vec2(0, WORLD.HEIGHT) },
+            // Left wall
+            { p1: new b2Vec2(0, WORLD.HEIGHT), p2: new b2Vec2(0, 0) }
+        ];
+
+        for (const edge of edges) {
+            const segment = { point1: edge.p1, point2: edge.p2 };
+            b2CreateSegmentShape(wallBody, shapeDef, segment);
+        }
     }
 
     private createSpaceship(): void {
         const graphics = this.add.graphics();
         this.spaceshipRenderer = new SpaceshipRenderer(graphics);
+
+        // Create Box2D body for ship
+        this.shipBody = CreateCircle({
+            worldId: this.box2dWorld.worldId,
+            type: 2,  // DYNAMIC
+            position: new b2Vec2(this.shipPosition.x, this.shipPosition.y),
+            radius: this.shipRadius,
+            density: this.shipMass / (Math.PI * this.shipRadius * this.shipRadius),
+            restitution: PHYSICS.DAMPING_OBJECT
+        });
+
+        // Register ship body ID with collision listener
+        this.collisionListener.setShipBody(this.shipBody.bodyId);
     }
 
     private createAsteroids(): void {
@@ -99,22 +159,40 @@ export class GravityGameScene extends Scene {
             // Random size
             const sizeData = Phaser.Math.RND.pick(PHYSICS.ASTEROID_SIZES);
 
-            // Create asteroid
-            const asteroid = this.add.circle(x, y, sizeData.radius, 0xFFFF00);
+            // Create visual representation
+            const asteroidGraphics = this.add.circle(x, y, sizeData.radius, 0xFFFF00);
 
             // Random initial velocity
             const speed = Phaser.Math.FloatBetween(20, 60);
             const angle = Phaser.Math.FloatBetween(0, Math.PI * 2);
+            const vx = Math.cos(angle) * speed;
+            const vy = Math.sin(angle) * speed;
 
-            this.asteroids.push({
-                gameObject: asteroid,
-                velocity: {
-                    x: Math.cos(angle) * speed,
-                    y: Math.sin(angle) * speed
-                },
+            // Create Box2D body
+            const body = CreateCircle({
+                worldId: this.box2dWorld.worldId,
+                type: 2,  // DYNAMIC
+                position: new b2Vec2(x, y),
+                radius: sizeData.radius,
+                density: sizeData.mass / (Math.PI * sizeData.radius * sizeData.radius),
+                restitution: PHYSICS.DAMPING_OBJECT
+            });
+
+            // Set initial velocity
+            b2Body_SetLinearVelocity(body.bodyId, new b2Vec2(vx, vy));
+
+            const asteroid: Asteroid = {
+                gameObject: asteroidGraphics,
+                body: body,
+                velocity: { x: vx, y: vy },  // Kept for UI display
                 mass: sizeData.mass,
                 radius: sizeData.radius
-            });
+            };
+
+            this.asteroids.push(asteroid);
+
+            // Register asteroid body ID with collision listener
+            this.collisionListener.addAsteroidBody(body.bodyId);
         }
     }
 
@@ -142,7 +220,7 @@ export class GravityGameScene extends Scene {
         const speed = Math.sqrt(this.shipVelocity.x ** 2 + this.shipVelocity.y ** 2);
         this.ui.updateVelocity(speed);
 
-        this.ui.updateCollisions(this.totalCollisions);
+        this.ui.updateCollisions(this.collisionListener.getCollisionCount());
 
         if (this.gravityEnabled) {
             this.ui.updateGravityTimer(this.gravityTimer);
@@ -159,50 +237,48 @@ export class GravityGameScene extends Scene {
             this.gravityTimer += dt;
         }
 
-        // Apply gravitational forces if enabled
+        // Apply gravitational forces if enabled (still manual N-body!)
         if (this.gravityEnabled) {
-            applyShipAsteroidGravity(
-                this.shipPosition,
-                this.shipVelocity,
-                this.shipMass,
-                this.asteroids,
-                dt
-            );
-            applyAsteroidAsteroidGravity(this.asteroids, dt);
+            applyShipAsteroidGravityBox2D(this.shipBody, this.shipMass, this.asteroids);
+            applyAsteroidAsteroidGravityBox2D(this.asteroids);
         }
 
-        // Integrate velocities into positions
-        this.updatePositions(dt);
+        // Cap velocities for stability
+        capVelocityBox2D(this.shipBody);
+        for (const asteroid of this.asteroids) {
+            capVelocityBox2D(asteroid.body);
+        }
 
-        // Check and resolve collisions
-        checkShipWallCollisions(this.shipPosition, this.shipVelocity, this.shipRadius);
-        checkAsteroidWallCollisions(this.asteroids);
-        const collisions = checkShipAsteroidCollisions(
-            this.shipPosition,
-            this.shipVelocity,
-            this.shipMass,
-            this.shipRadius,
-            this.asteroids
-        );
-        this.totalCollisions += collisions;
-        checkAsteroidAsteroidCollisions(this.asteroids);
+        // Step the Box2D world
+        this.box2dWorld.stepWorld(dt, 4);
+
+        // Process contact events for collision counting
+        const contactEvents = b2World_GetContactEvents(this.box2dWorld.worldId);
+        this.collisionListener.processContactEvents(contactEvents);
+
+        // Sync Box2D body positions to sprite positions
+        this.syncSprites();
     }
 
-    private updatePositions(dt: number): void {
-        // Cap ship velocity for stability
-        capVelocity(this.shipVelocity);
+    private syncSprites(): void {
+        // Sync ship position and velocity from Box2D body
+        const shipPos = b2Body_GetPosition(this.shipBody.bodyId);
+        const shipVel = b2Body_GetLinearVelocity(this.shipBody.bodyId);
 
-        // Update ship position
-        this.shipPosition.x += this.shipVelocity.x * dt;
-        this.shipPosition.y += this.shipVelocity.y * dt;
+        this.shipPosition.x = shipPos.x;
+        this.shipPosition.y = shipPos.y;
+        this.shipVelocity.x = shipVel.x;
+        this.shipVelocity.y = shipVel.y;
 
-        // Update asteroid positions
+        // Sync asteroid positions and velocities from Box2D bodies
         for (const asteroid of this.asteroids) {
-            // Cap asteroid velocity
-            capVelocity(asteroid.velocity);
+            const pos = b2Body_GetPosition(asteroid.body.bodyId);
+            const vel = b2Body_GetLinearVelocity(asteroid.body.bodyId);
 
-            asteroid.gameObject.x += asteroid.velocity.x * dt;
-            asteroid.gameObject.y += asteroid.velocity.y * dt;
+            asteroid.gameObject.x = pos.x;
+            asteroid.gameObject.y = pos.y;
+            asteroid.velocity.x = vel.x;
+            asteroid.velocity.y = vel.y;
         }
     }
 
