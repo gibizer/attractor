@@ -3,14 +3,14 @@ import { Game, Scene, GameObjects } from 'phaser';
 // Physics constants
 const PHYSICS = {
     G: 5,                         // Gravitational constant (increased for single inverse)
-    DAMPING_WALL: 0.8,              // Wall bounce energy retention
-    DAMPING_OBJECT: 0.9,            // Object collision energy retention
+    DAMPING_WALL: 1,              // Wall bounce energy retention
+    DAMPING_OBJECT: 0.01,            // Object collision energy retention
     MIN_GRAVITY_DISTANCE: 1,        // Prevents division by zero
-    MAX_GRAVITY_DISTANCE: 600,      // Maximum attraction distance (increased for longer range)
+    MAX_GRAVITY_DISTANCE: 6000,      // Maximum attraction distance (increased for longer range)
     MAX_VELOCITY: 500,              // Cap for stability
     SHIP_MASS: 10,
     SHIP_RADIUS: 20,
-    ASTEROID_COUNT: 8,
+    ASTEROID_COUNT: 4,
     ASTEROID_SIZES: [
         { radius: 15, mass: 225 },
         { radius: 25, mass: 625 },
