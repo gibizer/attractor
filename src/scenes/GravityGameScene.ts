@@ -70,6 +70,8 @@ export class GravityGameScene extends Scene {
     preload() {
         // Load background image
         this.load.image('background', 'background.jpg');
+        // Load asteroid sprite
+        this.load.image('asteroid', 'asteroid.png');
     }
 
     create() {
@@ -239,13 +241,11 @@ export class GravityGameScene extends Scene {
             // Random size
             const sizeData = Phaser.Math.RND.pick(PHYSICS.ASTEROID_SIZES);
 
-            // Create visual representation
-            const asteroidGraphics = this.add.circle(
-                x,
-                y,
-                sizeData.radius,
-                0xffff00
-            );
+            // Create visual representation using asteroid sprite
+            const asteroidSprite = this.add.image(x, y, 'asteroid');
+            // Scale sprite to match asteroid radius (diameter = radius * 2)
+            const spriteScale = (sizeData.radius * 2) / asteroidSprite.width;
+            asteroidSprite.setScale(spriteScale);
 
             // Random initial velocity
             const speed = Phaser.Math.FloatBetween(20, 60);
@@ -272,7 +272,7 @@ export class GravityGameScene extends Scene {
             b2Shape_EnableContactEvents(body.shapeId, true);
 
             const asteroid: Asteroid = {
-                gameObject: asteroidGraphics,
+                gameObject: asteroidSprite,
                 body: body,
                 velocity: { x: vx, y: vy }, // Kept for UI display
                 mass: sizeData.mass,
