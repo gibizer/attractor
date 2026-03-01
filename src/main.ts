@@ -39,6 +39,7 @@ class GravityGameScene extends Scene {
     private asteroids: Asteroid[] = [];
     private wallGraphics!: GameObjects.Graphics;
     private gravityTimeText!: GameObjects.Text;
+    private fpsText!: GameObjects.Text;
 
     // Physics state
     private gravityEnabled: boolean = false;
@@ -70,6 +71,11 @@ class GravityGameScene extends Scene {
             color: '#ffffff'
         });
         this.gravityTimeText.setOrigin(1, 0);
+
+        this.fpsText = this.add.text(20, 20, 'FPS: 0', {
+            fontSize: '24px',
+            color: '#ffffff'
+        });
 
         // Setup input
         this.spaceKey = this.input.keyboard!.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
@@ -206,6 +212,10 @@ class GravityGameScene extends Scene {
 
     update(time: number, delta: number) {
         const dt = delta / 1000; // Convert to seconds
+
+        // Update FPS counter
+        const fps = Math.round(1000 / delta);
+        this.fpsText.setText(`FPS: ${fps}`);
 
         // Update gravity state based on spacebar
         this.gravityEnabled = this.spaceKey.isDown;
