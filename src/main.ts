@@ -134,6 +134,22 @@ class GravityGameScene extends Scene {
 
     updateSpaceshipGraphics() {
         this.spaceship.clear();
+
+        // Draw bounding circle (dashed, light blue)
+        this.spaceship.lineStyle(2, 0xADD8E6);
+        const segments = 24; // Number of segments for dashed effect
+        const dashLength = (Math.PI * 2) / segments;
+        for (let i = 0; i < segments; i += 2) {
+            const startAngle = i * dashLength;
+            const endAngle = (i + 1) * dashLength;
+            const startX = this.shipPosition.x + this.shipRadius * Math.cos(startAngle);
+            const startY = this.shipPosition.y + this.shipRadius * Math.sin(startAngle);
+            const endX = this.shipPosition.x + this.shipRadius * Math.cos(endAngle);
+            const endY = this.shipPosition.y + this.shipRadius * Math.sin(endAngle);
+            this.spaceship.lineBetween(startX, startY, endX, endY);
+        }
+
+        // Draw spaceship triangle (red, filled)
         this.spaceship.fillStyle(0xFF0000);
 
         // Calculate rotation angle based on velocity
