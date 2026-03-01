@@ -6,6 +6,7 @@ import { Scene, GameObjects } from 'phaser';
 export class GameUI {
     private gravityTimeText: GameObjects.Text;
     private velocityText: GameObjects.Text;
+    private collisionText: GameObjects.Text;
     private fpsText: GameObjects.Text;
 
     constructor(scene: Scene) {
@@ -22,6 +23,13 @@ export class GameUI {
             color: '#ffffff'
         });
         this.velocityText.setOrigin(1, 0);
+
+        // Create collision counter (below velocity)
+        this.collisionText = scene.add.text(750, 80, 'Collisions: 0', {
+            fontSize: '24px',
+            color: '#ffffff'
+        });
+        this.collisionText.setOrigin(1, 0);
 
         // Create FPS counter (top left)
         this.fpsText = scene.add.text(20, 20, 'FPS: 0', {
@@ -49,5 +57,12 @@ export class GameUI {
      */
     updateFPS(fps: number): void {
         this.fpsText.setText(`FPS: ${fps}`);
+    }
+
+    /**
+     * Update the collision counter
+     */
+    updateCollisions(count: number): void {
+        this.collisionText.setText(`Collisions: ${count}`);
     }
 }

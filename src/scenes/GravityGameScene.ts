@@ -30,6 +30,7 @@ export class GravityGameScene extends Scene {
     // Physics state
     private gravityEnabled: boolean = false;
     private gravityTimer: number = 0;
+    private totalCollisions: number = 0;
 
     // Input
     private spaceKey!: Phaser.Input.Keyboard.Key;
@@ -141,6 +142,8 @@ export class GravityGameScene extends Scene {
         const speed = Math.sqrt(this.shipVelocity.x ** 2 + this.shipVelocity.y ** 2);
         this.ui.updateVelocity(speed);
 
+        this.ui.updateCollisions(this.totalCollisions);
+
         if (this.gravityEnabled) {
             this.ui.updateGravityTimer(this.gravityTimer);
         }
@@ -174,13 +177,14 @@ export class GravityGameScene extends Scene {
         // Check and resolve collisions
         checkShipWallCollisions(this.shipPosition, this.shipVelocity, this.shipRadius);
         checkAsteroidWallCollisions(this.asteroids);
-        checkShipAsteroidCollisions(
+        const collisions = checkShipAsteroidCollisions(
             this.shipPosition,
             this.shipVelocity,
             this.shipMass,
             this.shipRadius,
             this.asteroids
         );
+        this.totalCollisions += collisions;
         checkAsteroidAsteroidCollisions(this.asteroids);
     }
 

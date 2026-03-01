@@ -53,6 +53,7 @@ export function checkAsteroidWallCollisions(asteroids: Asteroid[]): void {
 
 /**
  * Check and resolve ship-to-asteroid collisions
+ * @returns Number of collisions detected and resolved
  */
 export function checkShipAsteroidCollisions(
     shipPosition: Vector2D,
@@ -60,7 +61,9 @@ export function checkShipAsteroidCollisions(
     shipMass: number,
     shipRadius: number,
     asteroids: Asteroid[]
-): void {
+): number {
+    let collisionCount = 0;
+
     for (const asteroid of asteroids) {
         const dx = asteroid.gameObject.x - shipPosition.x;
         const dy = asteroid.gameObject.y - shipPosition.y;
@@ -68,6 +71,8 @@ export function checkShipAsteroidCollisions(
         const minDist = shipRadius + asteroid.radius;
 
         if (distance < minDist) {
+            collisionCount++;
+
             // Normalize collision vector
             const nx = dx / distance;
             const ny = dy / distance;
@@ -105,6 +110,8 @@ export function checkShipAsteroidCollisions(
             asteroid.velocity.y -= (impulse / asteroid.mass) * ny * PHYSICS.DAMPING_OBJECT;
         }
     }
+
+    return collisionCount;
 }
 
 /**
