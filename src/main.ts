@@ -39,6 +39,7 @@ class GravityGameScene extends Scene {
     private asteroids: Asteroid[] = [];
     private wallGraphics!: GameObjects.Graphics;
     private gravityTimeText!: GameObjects.Text;
+    private velocityText!: GameObjects.Text;
     private fpsText!: GameObjects.Text;
 
     // Physics state
@@ -71,6 +72,12 @@ class GravityGameScene extends Scene {
             color: '#ffffff'
         });
         this.gravityTimeText.setOrigin(1, 0);
+
+        this.velocityText = this.add.text(750, 50, 'Velocity: 0', {
+            fontSize: '24px',
+            color: '#ffffff'
+        });
+        this.velocityText.setOrigin(1, 0);
 
         this.fpsText = this.add.text(20, 20, 'FPS: 0', {
             fontSize: '24px',
@@ -216,6 +223,10 @@ class GravityGameScene extends Scene {
         // Update FPS counter
         const fps = Math.round(1000 / delta);
         this.fpsText.setText(`FPS: ${fps}`);
+
+        // Update velocity display
+        const speed = Math.sqrt(this.shipVelocity.x ** 2 + this.shipVelocity.y ** 2);
+        this.velocityText.setText(`Velocity: ${Math.round(speed)}`);
 
         // Update gravity state based on spacebar
         this.gravityEnabled = this.spaceKey.isDown;
