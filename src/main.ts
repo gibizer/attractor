@@ -149,8 +149,9 @@ class GravityGameScene extends Scene {
             this.spaceship.lineBetween(startX, startY, endX, endY);
         }
 
-        // Draw spaceship triangle (red, filled)
-        this.spaceship.fillStyle(0xFF0000);
+        // Draw spaceship triangle (red when gravity off, orange when gravity on)
+        const shipColor = this.gravityEnabled ? 0xFF8C00 : 0xFF0000;
+        this.spaceship.fillStyle(shipColor);
 
         // Calculate rotation angle based on velocity
         let angle = 0;
