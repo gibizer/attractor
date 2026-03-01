@@ -1,4 +1,5 @@
 import { Scene, GameObjects } from 'phaser';
+import { WORLD } from '../config/physics';
 
 /**
  * Manages all UI elements in the game
@@ -11,24 +12,39 @@ export class GameUI {
 
     constructor(scene: Scene) {
         // Create gravity timer text (top right)
-        this.gravityTimeText = scene.add.text(750, 20, 'Gravity: 0.0s', {
-            fontSize: '24px',
-            color: '#ffffff',
-        });
+        this.gravityTimeText = scene.add.text(
+            WORLD.WIDTH - 50,
+            20,
+            'Gravity: 0.0s',
+            {
+                fontSize: '24px',
+                color: '#ffffff',
+            }
+        );
         this.gravityTimeText.setOrigin(1, 0);
 
         // Create velocity text (below gravity timer)
-        this.velocityText = scene.add.text(750, 50, 'Velocity: 0', {
-            fontSize: '24px',
-            color: '#ffffff',
-        });
+        this.velocityText = scene.add.text(
+            WORLD.WIDTH - 50,
+            50,
+            'Velocity: 0',
+            {
+                fontSize: '24px',
+                color: '#ffffff',
+            }
+        );
         this.velocityText.setOrigin(1, 0);
 
         // Create collision counter (below velocity)
-        this.collisionText = scene.add.text(750, 80, 'Collisions: 0', {
-            fontSize: '24px',
-            color: '#ffffff',
-        });
+        this.collisionText = scene.add.text(
+            WORLD.WIDTH - 50,
+            80,
+            'Collisions: 0',
+            {
+                fontSize: '24px',
+                color: '#ffffff',
+            }
+        );
         this.collisionText.setOrigin(1, 0);
 
         // Create FPS counter (top left)

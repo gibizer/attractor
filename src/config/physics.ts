@@ -9,7 +9,7 @@ export const PHYSICS = {
     MAX_VELOCITY: 500, // Cap for stability
     SHIP_MASS: 40,
     SHIP_RADIUS: 15,
-    ASTEROID_COUNT: 8,
+    ASTEROID_COUNT: 4,
     ASTEROID_SIZES: [
         { radius: 10, mass: 40 },
         { radius: 40, mass: 160 },
@@ -23,6 +23,6 @@ export const VISUAL = {
 };
 
 export const WORLD = {
-    WIDTH: 800,
-    HEIGHT: 600,
+    WIDTH: 400,
+    HEIGHT: 700,
 };

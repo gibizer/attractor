@@ -34,7 +34,10 @@ export class GravityGameScene extends Scene {
     // Player
     private spaceshipRenderer!: SpaceshipRenderer;
     private shipVelocity: Vector2D = { x: 0, y: 0 };
-    private shipPosition: Vector2D = { x: 400, y: 300 };
+    private shipPosition: Vector2D = {
+        x: WORLD.WIDTH / 2,
+        y: WORLD.HEIGHT * 0.9,
+    };
     private shipMass: number = PHYSICS.SHIP_MASS;
     private shipRadius: number = PHYSICS.SHIP_RADIUS;
     private shipBody!: any; // Box2D Body
