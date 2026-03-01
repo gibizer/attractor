@@ -1,0 +1,12 @@
+# Build outputs
+dist
+node_modules
+.claude
+
+# Box2D library files (don't format third-party code)
+src/PhaserBox2D.js
+src/PhaserBox2D-Debug.js
+src/PhaserBox2D-Debug.js.map
+
+# Package files
+package-lock.json

@@ -5,14 +5,14 @@ import { Asteroid } from '../types/GameObject';
 import {
     b2Body_GetPosition,
     b2Body_ApplyForceToCenter,
-    b2Vec2
+    b2Vec2,
 } from '../PhaserBox2D.js';
 
 /**
  * Apply gravitational forces between ship and asteroids using Box2D
  */
 export function applyShipAsteroidGravityBox2D(
-    shipBody: any,  // Box2D Body wrapper
+    shipBody: any, // Box2D Body wrapper
     shipMass: number,
     asteroids: Asteroid[]
 ): void {
@@ -26,13 +26,18 @@ export function applyShipAsteroidGravityBox2D(
         const distance = Math.sqrt(dx * dx + dy * dy);
 
         // Skip if too far or too close
-        if (distance < PHYSICS.MIN_GRAVITY_DISTANCE || distance > PHYSICS.MAX_GRAVITY_DISTANCE) {
+        if (
+            distance < PHYSICS.MIN_GRAVITY_DISTANCE ||
+            distance > PHYSICS.MAX_GRAVITY_DISTANCE
+        ) {
             continue;
         }
 
         // Calculate gravitational force with single inverse
-        
-        const force = PHYSICS.G * shipMass * asteroid.mass / Math.pow(distance, PHYSICS.G_DISTANCE_POW);
+
+        const force =
+            (PHYSICS.G * shipMass * asteroid.mass) /
+            Math.pow(distance, PHYSICS.G_DISTANCE_POW);
 
         // Normalize direction
         const nx = dx / distance;
@@ -51,7 +56,9 @@ export function applyShipAsteroidGravityBox2D(
 /**
  * Apply gravitational forces between asteroids using Box2D
  */
-export function applyAsteroidAsteroidGravityBox2D(asteroids: Asteroid[]): void {
+export function applyAsteroidAsteroidGravityBox2D(
+    asteroids: Asteroid[]
+): void {
     for (let i = 0; i < asteroids.length; i++) {
         for (let j = i + 1; j < asteroids.length; j++) {
             const a1 = asteroids[i];
@@ -65,12 +72,17 @@ export function applyAsteroidAsteroidGravityBox2D(asteroids: Asteroid[]): void {
             const distance = Math.sqrt(dx * dx + dy * dy);
 
             // Skip if too far or too close
-            if (distance < PHYSICS.MIN_GRAVITY_DISTANCE || distance > PHYSICS.MAX_GRAVITY_DISTANCE) {
+            if (
+                distance < PHYSICS.MIN_GRAVITY_DISTANCE ||
+                distance > PHYSICS.MAX_GRAVITY_DISTANCE
+            ) {
                 continue;
             }
 
             // Calculate gravitational force with single inverse
-            const force = PHYSICS.G * a1.mass * a2.mass / Math.pow(distance, PHYSICS.G_DISTANCE_POW);
+            const force =
+                (PHYSICS.G * a1.mass * a2.mass) /
+                Math.pow(distance, PHYSICS.G_DISTANCE_POW);
 
             // Normalize direction
             const nx = dx / distance;

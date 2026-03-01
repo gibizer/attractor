@@ -7,8 +7,8 @@ export interface Vector2D {
 
 export interface Asteroid {
     gameObject: GameObjects.Arc;
-    body: any;  // Box2D Body (using any due to module import issues)
-    velocity: Vector2D;  // Kept for UI display
+    body: any; // Box2D Body (using any due to module import issues)
+    velocity: Vector2D; // Kept for UI display
     mass: number;
     radius: number;
 }

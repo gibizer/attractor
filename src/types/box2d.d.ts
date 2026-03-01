@@ -95,7 +95,7 @@ export interface Body {
 export enum b2BodyType {
     b2_staticBody = 0,
     b2_kinematicBody = 1,
-    b2_dynamicBody = 2
+    b2_dynamicBody = 2,
 }
 
 export enum b2HexColor {
@@ -106,7 +106,7 @@ export enum b2HexColor {
     b2_colorLawnGreen,
     b2_colorGold,
     b2_colorRed,
-    b2_colorYellow
+    b2_colorYellow,
 }
 
 export function b2DefaultWorldDef(): b2WorldDef;
@@ -155,8 +155,14 @@ export function CreateCircle(options: CreateCircleOptions): Body;
 export function CreateBoxPolygon(options: CreateBoxPolygonOptions): Body;
 export function CreateEdge(options: CreateEdgeOptions): Body;
 
-export function b2World_EnableSleeping(worldId: b2WorldId, flag: boolean): void;
-export function b2World_EnableContinuous(worldId: b2WorldId, flag: boolean): void;
+export function b2World_EnableSleeping(
+    worldId: b2WorldId,
+    flag: boolean
+): void;
+export function b2World_EnableContinuous(
+    worldId: b2WorldId,
+    flag: boolean
+): void;
 
 export interface ContactBeginEvent {
     shapeIdA: any;

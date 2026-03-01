@@ -13,28 +13,28 @@ export class GameUI {
         // Create gravity timer text (top right)
         this.gravityTimeText = scene.add.text(750, 20, 'Gravity: 0.0s', {
             fontSize: '24px',
-            color: '#ffffff'
+            color: '#ffffff',
         });
         this.gravityTimeText.setOrigin(1, 0);
 
         // Create velocity text (below gravity timer)
         this.velocityText = scene.add.text(750, 50, 'Velocity: 0', {
             fontSize: '24px',
-            color: '#ffffff'
+            color: '#ffffff',
         });
         this.velocityText.setOrigin(1, 0);
 
         // Create collision counter (below velocity)
         this.collisionText = scene.add.text(750, 80, 'Collisions: 0', {
             fontSize: '24px',
-            color: '#ffffff'
+            color: '#ffffff',
         });
         this.collisionText.setOrigin(1, 0);
 
         // Create FPS counter (top left)
         this.fpsText = scene.add.text(20, 20, 'FPS: 0', {
             fontSize: '24px',
-            color: '#ffffff'
+            color: '#ffffff',
         });
     }
 

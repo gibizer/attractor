@@ -4,7 +4,7 @@ import { PHYSICS } from '../config/physics';
 import {
     b2Body_GetLinearVelocity,
     b2Body_SetLinearVelocity,
-    b2Vec2
+    b2Vec2,
 } from '../PhaserBox2D.js';
 
 /**

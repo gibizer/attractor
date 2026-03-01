@@ -9,7 +9,7 @@ const config: Phaser.Types.Core.GameConfig = {
     height: WORLD.HEIGHT,
     parent: document.body,
     backgroundColor: '#000000',
-    scene: GravityGameScene
+    scene: GravityGameScene,
 };
 
 // Start the game
